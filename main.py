@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
+import json
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def generate_password():
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -26,26 +27,59 @@ def generate_password():
     pyperclip.copy(password)
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def save():
+    new_data ={
+        entry_webiste.get(): {
+            "email" : entry_user.get(),
+            "password": entry_pass.get()
+        }
+    }
 
 
 
 
     if len(entry_webiste.get()) == 0 or len(entry_pass.get()) == 0:
         messagebox.showinfo(title="Oops", message="Please don't leave any fields empty!")
+
     else:
-        is_ok = messagebox.askokcancel(title=entry_webiste.get(),
-                                       message=f"These are the details entered: \nEmail: {entry_user.get()}"
-                                               f"\nPassword: {entry_pass.get()} \nIs it ok to save?")
+        try:
+            with open("data.json","r") as file:
+                data = json.load(file)
+                data.update(new_data)
 
-        if is_ok:
+        except:
 
-            with open("data.txt", "a") as file:
-                my_tuple = (entry_webiste.get(),entry_user.get(),entry_pass.get())
-                x = "|".join(my_tuple)
-                file.write(f"{x}\n")
+            with open("data.json", "w") as file:
+                json.dump(new_data, file, indent=4)
 
-            entry_webiste.delete(0,END)
-            entry_pass.delete(0,END)
+                entry_webiste.delete(0,END)
+                entry_pass.delete(0,END)
+
+        else:
+            with open("data.json", "w") as file:
+                json.dump(data, file, indent=4)
+
+                entry_webiste.delete(0, END)
+                entry_pass.delete(0, END)
+
+# ---------------------------- search function ------------------------------- #
+def find_password():
+
+    website=entry_webiste.get()
+    try:
+        with open("data.json") as file:
+            data=json.load(file)
+
+    except FileNotFoundError:
+        messagebox.showinfo(title="Error", message="No Data File Found.")
+
+
+    else:
+        if website in data:
+            email = data[website]["email"]
+            password = data[website]["password"]
+            messagebox.showinfo(title=website, message=f"Email:{email}, Password:{password}")
+        else:
+            messagebox.showinfo(title="Oops", message="No details for the webiste exist.")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -62,8 +96,8 @@ canvas.grid(column=1,row=0)
 label_webiste = Label(text="Webiste:")
 label_webiste.grid(column=0,row=1)
 
-entry_webiste = Entry(width=35)
-entry_webiste.grid(row=1,column=1,columnspan=2)
+entry_webiste = Entry(width=17)
+entry_webiste.grid(row=1,column=1)
 entry_webiste.focus()
 
 label_username = Label(text="Email/Username:")
@@ -81,11 +115,13 @@ entry_pass = Entry(width=18)
 entry_pass.grid(row=3,column=1)
 
 
-button_gen =Button(text="Generate Password",command=generate_password)
+button_gen =Button(text="Generate Password",command=generate_password,width=13)
 button_gen.grid(column=2,row=3)
 
 button_add =Button(text="Add",width=33,command=save)
 button_add.grid(column=1,row=4,columnspan=2)
 
+button_search =Button(text="Search",command=find_password,width=10)
+button_search.grid(column=2,row=1)
 
 window.mainloop()
